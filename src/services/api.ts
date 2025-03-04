@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Get base URL from environment variables, with a fallback
-const API_URL =  'http://localhost:5000/api';
+const API_URL =  'https://techblog-backend-0zpy.onrender.com/api';
 
 // Create axios instance with default config
 const api = axios.create({
