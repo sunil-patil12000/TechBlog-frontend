@@ -1,0 +1,380 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Material Design 3 + Neumorphism variables */
+:root {
+  /* Material Design 3 color system */
+  --primary-50: #eefbff;
+  --primary-100: #dcf7ff;
+  --primary-200: #b8eeff;
+  --primary-300: #94e6ff;
+  --primary-400: #70ddfe;
+  --primary-500: #4cd3fc;
+  --primary-600: #39b3ed;
+  --primary-700: #288dce;
+  --primary-800: #2372a9;
+  --primary-900: #225e89;
+  --primary-950: #173d5c;
+  
+  --secondary-50: #f4f1ff;
+  --secondary-100: #ede5ff;
+  --secondary-200: #d9caff;
+  --secondary-300: #beaaff;
+  --secondary-400: #a182ff;
+  --secondary-500: #8a63fc;
+  --secondary-600: #7344ef;
+  --secondary-700: #6132d1;
+  --secondary-800: #512baa;
+  --secondary-900: #452789;
+  --secondary-950: #281566;
+
+  /* Light theme variables */
+  --surface-light: #FFFFFF;
+  --surface-light-elevated: #F8F9FC;
+  --surface-light-depressed: #EDF0F7;
+  --text-primary-light: #1A1A2A;
+  --text-secondary-light: #52525B;
+  --border-light: #E2E8F0;
+  
+  /* Neumorphic light theme shadows */
+  --neu-shadow-light: 8px 8px 16px rgba(174, 174, 192, 0.4), -8px -8px 16px rgba(255, 255, 255, 0.9);
+  --neu-shadow-pressed-light: inset 4px 4px 8px rgba(174, 174, 192, 0.2), inset -4px -4px 8px rgba(255, 255, 255, 0.7);
+  
+  /* System settings */
+  color-scheme: light;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.dark {
+  /* Dark theme variables */
+  --surface-dark: #1A1A2A;
+  --surface-dark-elevated: #25253A;
+  --surface-dark-depressed: #12121E;
+  --text-primary-dark: #F8FAFC;
+  --text-secondary-dark: #CBD5E1;
+  --border-dark: #2D3748;
+  
+  /* Neumorphic dark theme shadows */
+  --neu-shadow-dark: 8px 8px 16px rgba(0, 0, 0, 0.5), -8px -8px 16px rgba(67, 67, 92, 0.3);
+  --neu-shadow-pressed-dark: inset 4px 4px 8px rgba(0, 0, 0, 0.7), inset -4px -4px 8px rgba(67, 67, 92, 0.2);
+  
+  color-scheme: dark;
+}
+
+/* Base styles with smooth transitions */
+@layer base {
+  body {
+    @apply bg-surface-light dark:bg-surface-dark text-gray-900 dark:text-gray-100;
+    font-family: 'Inter', sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Merriweather', serif;
+    @apply font-bold tracking-tight;
+  }
+  
+  a {
+    @apply transition-colors duration-200;
+  }
+
+  /* Focus styles for accessibility */
+  :focus-visible {
+    @apply outline-primary ring-2 ring-primary-500/50 ring-offset-2;
+  }
+
+  /* Mobile-first approach - fluid typography */
+  html {
+    font-size: clamp(14px, 0.875rem + 0.25vw, 18px);
+  }
+}
+
+@layer components {
+  /* Neumorphic component styles */
+  .neu-flat {
+    @apply bg-surface-light dark:bg-surface-dark;
+  }
+  
+  .neu-raised {
+    @apply bg-surface-light dark:bg-surface-dark;
+    box-shadow: var(--neu-shadow-light);
+  }
+  
+  .dark .neu-raised {
+    box-shadow: var(--neu-shadow-dark);
+  }
+  
+  .neu-pressed {
+    @apply bg-surface-light-depressed dark:bg-surface-dark-depressed;
+    box-shadow: var(--neu-shadow-pressed-light);
+  }
+  
+  .dark .neu-pressed {
+    box-shadow: var(--neu-shadow-pressed-dark);
+  }
+
+  /* Material Design 3 Button Styles */
+  .btn {
+    @apply inline-flex items-center justify-center px-5 py-2.5 rounded-md font-medium transition-all duration-200 
+    focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed
+    text-sm md:text-base;
+  }
+  
+  .btn-filled {
+    @apply btn bg-primary-600 hover:bg-primary-700 text-white focus:ring-primary-500;
+  }
+  
+  .btn-outlined {
+    @apply btn bg-transparent border-2 border-primary-600 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 dark:hover:text-primary-400 dark:text-primary-400 dark:border-primary-500 focus:ring-primary-500;
+  }
+  
+  .btn-text {
+    @apply btn bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-primary-600 dark:text-primary-400;
+  }
+
+  .btn-neu {
+    @apply btn bg-surface-light dark:bg-surface-dark text-primary-600 dark:text-primary-400;
+    box-shadow: var(--neu-shadow-light);
+    transition: all 0.3s ease;
+  }
+
+  .btn-neu:hover {
+    transform: translateY(-2px);
+  }
+
+  .btn-neu:active {
+    box-shadow: var(--neu-shadow-pressed-light);
+    transform: translateY(0);
+  }
+
+  .dark .btn-neu {
+    box-shadow: var(--neu-shadow-dark);
+  }
+
+  .dark .btn-neu:active {
+    box-shadow: var(--neu-shadow-pressed-dark);
+  }
+
+  /* Card styles with Neumorphism */
+  .card {
+    @apply rounded-xl overflow-hidden transition-all duration-300 bg-surface-light dark:bg-surface-dark;
+  }
+
+  .card-flat {
+    @apply card border border-gray-100 dark:border-gray-800;
+  }
+  
+  .card-elevated {
+    @apply card shadow-md hover:shadow-lg;
+  }
+  
+  .card-neu {
+    @apply card;
+    box-shadow: var(--neu-shadow-light);
+    transition: all 0.3s ease;
+  }
+  
+  .card-neu:hover {
+    transform: translateY(-4px);
+  }
+  
+  .dark .card-neu {
+    box-shadow: var(--neu-shadow-dark);
+  }
+  
+  /* Form controls with Material Design */
+  .form-input {
+    @apply block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50 bg-white dark:bg-gray-800 dark:text-white;
+  }
+  
+  .form-label {
+    @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1;
+  }
+  
+  /* Badge component */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  .badge-primary {
+    @apply badge bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-200;
+  }
+
+  .badge-secondary {
+    @apply badge bg-secondary-100 dark:bg-secondary-900 text-secondary-800 dark:text-secondary-200;
+  }
+}
+
+@layer utilities {
+  .outline-primary {
+    outline-color: #3b82f6; /* Change to your primary color */
+  }
+}
+
+/* Custom animations */
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+.slide-up {
+  animation: slideUp 0.5s ease-out;
+}
+
+.scale-in {
+  animation: scaleIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Typography enhancements for Material Design */
+.prose {
+  @apply max-w-none;
+}
+
+.prose p {
+  @apply leading-relaxed;
+}
+
+.prose h2 {
+  @apply text-3xl mt-12 mb-6;
+}
+
+.prose h3 {
+  @apply text-2xl mt-10 mb-4;
+}
+
+/* Add a nice underline effect for links */
+.hover-underline {
+  @apply relative;
+}
+
+.hover-underline:after {
+  content: '';
+  @apply absolute left-0 bottom-0 w-0 h-0.5 bg-primary-600 dark:bg-primary-400 transition-all duration-300;
+}
+
+.hover-underline:hover:after {
+  @apply w-full;
+}
+
+/* Material Design 3 state layers for interactive elements */
+.state-layer {
+  @apply relative overflow-hidden;
+}
+
+.state-layer::before {
+  @apply absolute inset-0 bg-current pointer-events-none opacity-0 transition-opacity duration-200;
+  content: '';
+}
+
+.state-layer:hover::before {
+  @apply opacity-5;
+}
+
+.state-layer:active::before {
+  @apply opacity-10;
+}
+
+/* CSS Grid utilities for the fluid grid system */
+.grid-auto-fit {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.grid-auto-fit-sm {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.grid-auto-fit-lg {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+}
+
+/* Material Design 3 elevation styles */
+.elevation-1 {
+  @apply shadow-sm;
+}
+
+.elevation-2 {
+  @apply shadow;
+}
+
+.elevation-3 {
+  @apply shadow-md;
+}
+
+.elevation-4 {
+  @apply shadow-lg;
+}
+
+.elevation-5 {
+  @apply shadow-xl;
+}
+
+/* Progressive image loading */
+.image-loading {
+  @apply relative bg-gray-200 dark:bg-gray-800 overflow-hidden;
+}
+
+.image-loading::after {
+  content: "";
+  @apply absolute inset-0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  animation: shimmer 1.5s infinite;
+}
+
+.dark .image-loading::after {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Accessibility helpers */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.not-sr-only {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}

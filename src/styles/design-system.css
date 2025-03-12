@@ -1,0 +1,32 @@
+:root {
+  --color-primary: 59 130 246;
+  --color-secondary: 168 85 247;
+  --color-accent: 34 211 238;
+  --color-text: 17 24 39;
+  --color-bg: 255 255 255;
+  --color-border: 229 231 235;
+}
+
+.dark {
+  --color-text: 249 250 251;
+  --color-bg: 17 24 39;
+  --color-border: 55 65 81;
+}
+
+@layer components {
+  .prose {
+    @apply max-w-3xl mx-auto;
+    h1, h2, h3 {
+      @apply scroll-mt-24;
+    }
+    a {
+      @apply text-indigo-600 dark:text-indigo-400 hover:underline;
+    }
+    code:not([class*="language-"]) {
+      @apply px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-sm font-mono;
+    }
+    pre {
+      @apply rounded-lg overflow-hidden;
+    }
+  }
+} 
