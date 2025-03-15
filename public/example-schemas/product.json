@@ -1,0 +1,67 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "DevPro 5000 Mechanical Keyboard",
+  "image": [
+    "https://yourdomain.com/images/products/keyboard-main.jpg",
+    "https://yourdomain.com/images/products/keyboard-angle.jpg",
+    "https://yourdomain.com/images/products/keyboard-closeup.jpg"
+  ],
+  "description": "The ultimate mechanical keyboard for developers, featuring customizable RGB lighting, hot-swappable switches, and programmable macros for maximum productivity.",
+  "brand": {
+    "@type": "Brand",
+    "name": "TechGear"
+  },
+  "sku": "TG-KB-DP5000",
+  "mpn": "DP5000-MX-BLUE",
+  "gtin13": "7890123456789",
+  "offers": {
+    "@type": "Offer",
+    "url": "https://yourdomain.com/store/devpro-5000-mechanical-keyboard",
+    "price": 149.99,
+    "priceCurrency": "USD",
+    "availability": "https://schema.org/InStock",
+    "priceValidUntil": "2025-12-31",
+    "itemCondition": "https://schema.org/NewCondition",
+    "seller": {
+      "@type": "Organization",
+      "name": "Tech Blog Store"
+    }
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": 4.8,
+    "reviewCount": 427,
+    "bestRating": 5
+  },
+  "review": [
+    {
+      "@type": "Review",
+      "author": {
+        "@type": "Person",
+        "name": "Alex Chen"
+      },
+      "datePublished": "2025-02-15",
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": 5,
+        "bestRating": 5
+      },
+      "reviewBody": "This is the best keyboard I've ever used. The tactile feedback is perfect, and the customization options are endless."
+    },
+    {
+      "@type": "Review",
+      "author": {
+        "@type": "Person",
+        "name": "Maya Johnson"
+      },
+      "datePublished": "2025-02-10",
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": 4,
+        "bestRating": 5
+      },
+      "reviewBody": "Great keyboard for coding. The only thing I would improve is the wrist rest."
+    }
+  ]
+} 

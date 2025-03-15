@@ -2,6 +2,22 @@ import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTheme } from '../../contexts';
 import { useLocation } from 'react-router-dom';
+import {
+  ArticleSchema,
+  EventSchema,
+  ProductSchema,
+  FAQSchema,
+  VideoSchema,
+  generateArticleSchema,
+  generateEventSchema,
+  generateProductSchema,
+  generateFAQSchema,
+  generateVideoSchema,
+  generateBreadcrumbSchema,
+  formatKeywords,
+  truncateText,
+  generateCanonicalUrl
+} from '../../utils/seo';
 
 export interface BreadcrumbItem {
   name: string;
@@ -11,54 +27,32 @@ export interface BreadcrumbItem {
 export interface SEOProps {
   title: string;
   description?: string;
-  keywords?: string;
+  keywords?: string[] | string;
   ogImage?: string;
   ogType?: 'website' | 'article' | 'product' | 'event';
   canonical?: string;
   noIndex?: boolean;
   breadcrumbs?: BreadcrumbItem[];
-  article?: {
-    publishedTime?: string;
-    modifiedTime?: string;
-    expirationTime?: string;
-    authors?: {
-      name: string;
-      website?: string;
-    }[];
-    tags?: string[];
-    section?: string;
-  };
-  product?: {
-    name: string;
-    image: string;
-    description: string;
-    brand?: string;
-    offers?: {
-      price: number;
-      priceCurrency: string;
-      availability: string;
-    }[];
-    aggregateRating?: {
-      ratingValue: number;
-      reviewCount: number;
-    };
-  };
-  event?: {
-    name: string;
-    startDate: string;
-    endDate?: string;
-    location: {
-      name: string;
-      address: string;
-    };
-    image?: string;
-    description?: string;
-    organizer?: {
-      name: string;
-      url?: string;
-    };
-  };
+  article?: ArticleSchema;
+  product?: ProductSchema;
+  event?: EventSchema;
+  faq?: FAQSchema;
+  video?: VideoSchema;
   structuredData?: Record<string, any>;
+  languageAlternates?: {
+    hrefLang: string;
+    href: string;
+  }[];
+  twitter?: {
+    cardType?: 'summary' | 'summary_large_image' | 'app' | 'player';
+    site?: string;
+    creator?: string;
+  };
+  meta?: Array<{
+    name?: string;
+    property?: string;
+    content: string;
+  }>;
 }
 
 const SEO: React.FC<SEOProps> = ({
@@ -73,7 +67,15 @@ const SEO: React.FC<SEOProps> = ({
   article,
   product,
   event,
+  faq,
+  video,
   structuredData,
+  languageAlternates = [],
+  twitter = {
+    cardType: 'summary_large_image',
+    site: '@techblog',
+  },
+  meta = [],
 }) => {
   // Use try/catch to gracefully handle context errors
   let isDark = false;
@@ -88,129 +90,26 @@ const SEO: React.FC<SEOProps> = ({
   const location = useLocation();
   const siteTitle = title ? `${title} | Tech Blog` : 'Tech Blog - Latest Tech News and Reviews';
   const siteUrl = import.meta.env.VITE_APP_URL || 'https://yourdomain.com';
-  const canonicalUrl = canonical ? `${siteUrl}${canonical}` : `${siteUrl}${location.pathname}`;
+  const canonicalUrl = canonical 
+    ? generateCanonicalUrl(canonical) 
+    : generateCanonicalUrl(location.pathname);
   
   // Helper to safely handle ogImage
   const getImageUrl = (img: string | undefined) => {
     if (!img) return `${siteUrl}/images/og-default.jpg`;
-    return typeof img === 'string' && img.startsWith('http') 
-      ? img 
-      : `${siteUrl}${img}`;
+    return img.startsWith('http') ? img : `${siteUrl}${img}`;
   };
+  
+  // Format keywords to string if they're in an array
+  const keywordsString = formatKeywords(keywords);
   
   // Generate breadcrumb structured data
-  const generateBreadcrumbSchema = () => {
-    if (!breadcrumbs || breadcrumbs.length === 0) return null;
-    
-    return {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      'itemListElement': breadcrumbs.map((item, index) => ({
-        '@type': 'ListItem',
-        'position': index + 1,
-        'name': item.name,
-        'item': `${siteUrl}${item.url}`,
-      })),
-    };
-  };
-  
-  // Create structured data based on content type
-  let contentStructuredData = {};
-  
-  // Article schema
-  if (ogType === 'article' && article) {
-    contentStructuredData = {
-      '@context': 'https://schema.org',
-      '@type': 'Article',
-      headline: title.length > 110 ? title.substring(0, 107) + '...' : title, // Max 110 chars for Google
-      description: description,
-      image: getImageUrl(ogImage),
-      ...(article.publishedTime && { datePublished: article.publishedTime }),
-      ...(article.modifiedTime && { dateModified: article.modifiedTime }),
-      ...(article.expirationTime && { expires: article.expirationTime }),
-      ...(article.authors && { 
-        author: article.authors.map(author => ({
-          '@type': 'Person',
-          name: author.name,
-          url: author.website,
-        }))
-      }),
-      publisher: {
-        '@type': 'Organization',
-        name: 'Tech Blog',
-        logo: {
-          '@type': 'ImageObject',
-          url: `${siteUrl}/images/logo.png`,
-        }
-      },
-      mainEntityOfPage: {
-        '@type': 'WebPage',
-        '@id': canonicalUrl,
-      },
-      ...(article.tags && { keywords: article.tags.join(', ') }),
-      ...(article.section && { articleSection: article.section }),
-    };
-  }
-  
-  // Product schema
-  if (ogType === 'product' && product) {
-    contentStructuredData = {
-      '@context': 'https://schema.org',
-      '@type': 'Product',
-      name: product.name,
-      image: getImageUrl(product.image),
-      description: product.description,
-      ...(product.brand && { 
-        brand: {
-          '@type': 'Brand',
-          name: product.brand
-        }
-      }),
-      ...(product.offers && {
-        offers: product.offers.map(offer => ({
-          '@type': 'Offer',
-          price: offer.price,
-          priceCurrency: offer.priceCurrency,
-          availability: offer.availability
-        }))
-      }),
-      ...(product.aggregateRating && {
-        aggregateRating: {
-          '@type': 'AggregateRating',
-          ratingValue: product.aggregateRating.ratingValue,
-          reviewCount: product.aggregateRating.reviewCount
-        }
-      })
-    };
-  }
-  
-  // Event schema
-  if (ogType === 'event' && event) {
-    contentStructuredData = {
-      '@context': 'https://schema.org',
-      '@type': 'Event',
-      name: event.name,
-      startDate: event.startDate,
-      ...(event.endDate && { endDate: event.endDate }),
-      location: {
-        '@type': 'Place',
-        name: event.location.name,
-        address: event.location.address
-      },
-      ...(event.image && { image: getImageUrl(event.image) }),
-      ...(event.description && { description: event.description }),
-      ...(event.organizer && {
-        organizer: {
-          '@type': 'Organization',
-          name: event.organizer.name,
-          ...(event.organizer.url && { url: event.organizer.url })
-        }
-      })
-    };
-  }
+  const breadcrumbsSchema = breadcrumbs && breadcrumbs.length > 0 
+    ? generateBreadcrumbSchema(breadcrumbs)
+    : null;
   
   // Website schema (default)
-  const websiteSchema = {
+  const websiteSchema = JSON.stringify({
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'Tech Blog',
@@ -220,20 +119,73 @@ const SEO: React.FC<SEOProps> = ({
       target: `${siteUrl}/search?q={search_term_string}`,
       'query-input': 'required name=search_term_string'
     }
-  };
+  });
   
-  // Breadcrumb schema
-  const breadcrumbSchema = generateBreadcrumbSchema();
+  // Determine which schema to use based on the content type
+  let contentSchema: string | null = null;
   
-  // Merge with custom structured data if provided
-  const finalStructuredData = structuredData || 
-    (Object.keys(contentStructuredData).length > 0 ? contentStructuredData : websiteSchema);
+  if (article) {
+    contentSchema = generateArticleSchema({
+      ...article,
+      headline: article.headline || title,
+      description: article.description || description,
+      image: article.image || getImageUrl(ogImage),
+    });
+  } else if (product) {
+    contentSchema = generateProductSchema({
+      ...product,
+      image: product.image || getImageUrl(ogImage),
+    });
+  } else if (event) {
+    contentSchema = generateEventSchema({
+      ...event,
+      image: event.image || getImageUrl(ogImage),
+      description: event.description || description,
+    });
+  } else if (faq) {
+    contentSchema = generateFAQSchema(faq);
+  } else if (video) {
+    contentSchema = generateVideoSchema(video);
+  }
+  
+  // Use custom structured data if provided, otherwise use generated schema
+  const finalSchema = structuredData ? JSON.stringify(structuredData) : 
+    contentSchema || websiteSchema;
+  
+  // Get all meta tags including custom ones
+  const metaTags = [
+    { name: 'description', content: description },
+    { name: 'keywords', content: keywordsString },
+    // Open Graph tags
+    { property: 'og:title', content: title },
+    { property: 'og:description', content: description },
+    { property: 'og:url', content: canonicalUrl },
+    { property: 'og:type', content: ogType },
+    { property: 'og:image', content: getImageUrl(ogImage) },
+    { property: 'og:site_name', content: 'Tech Blog' },
+    { property: 'og:locale', content: 'en_US' },
+    // Twitter tags
+    { name: 'twitter:card', content: twitter.cardType },
+    { name: 'twitter:title', content: title },
+    { name: 'twitter:description', content: description },
+    { name: 'twitter:image', content: getImageUrl(ogImage) },
+    ...(twitter.site ? [{ name: 'twitter:site', content: twitter.site }] : []),
+    ...(twitter.creator ? [{ name: 'twitter:creator', content: twitter.creator }] : []),
+    // Add custom meta tags
+    ...meta,
+  ];
 
   return (
     <Helmet>
+      <html lang="en" data-theme={isDark ? 'dark' : 'light'} />
       <title>{siteTitle}</title>
-      <meta name="description" content={description} />
-      <meta name="keywords" content={keywords} />
+      
+      {/* Meta tags */}
+      {metaTags.map((tag, i) => (
+        tag.name 
+          ? <meta key={`meta-${i}`} name={tag.name} content={tag.content} />
+          : <meta key={`meta-${i}`} property={tag.property} content={tag.content} />
+      ))}
       
       {/* Robots directives */}
       {noIndex ? (
@@ -245,58 +197,43 @@ const SEO: React.FC<SEOProps> = ({
       {/* Canonical URL for SEO */}
       <link rel="canonical" href={canonicalUrl} />
       
-      {/* Open Graph / Facebook */}
-      <meta property="og:site_name" content="Tech Blog" />
-      <meta property="og:url" content={canonicalUrl} />
-      <meta property="og:type" content={ogType} />
-      <meta property="og:title" content={title} />
-      <meta property="og:description" content={description} />
-      <meta property="og:image" content={getImageUrl(ogImage)} />
-      <meta property="og:image:alt" content={`Image for ${title}`} />
-      <meta property="og:locale" content="en_US" />
-      
-      {/* Article specific Open Graph tags */}
-      {ogType === 'article' && article?.publishedTime && (
-        <meta property="article:published_time" content={article.publishedTime} />
-      )}
-      {ogType === 'article' && article?.modifiedTime && (
-        <meta property="article:modified_time" content={article.modifiedTime} />
-      )}
-      {ogType === 'article' && article?.section && (
-        <meta property="article:section" content={article.section} />
-      )}
-      {ogType === 'article' && article?.tags && article.tags.map((tag, i) => (
-        <meta property="article:tag" content={tag} key={i} />
+      {/* Language alternates for international SEO */}
+      {languageAlternates.map((alt, index) => (
+        <link 
+          key={`lang-${index}`} 
+          rel="alternate" 
+          href={alt.href} 
+          hrefLang={alt.hrefLang} 
+        />
       ))}
       
-      {/* Twitter */}
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={title} />
-      <meta name="twitter:description" content={description} />
-      <meta name="twitter:image" content={getImageUrl(ogImage)} />
+      {/* Web App Manifest */}
+      <link rel="manifest" href="/manifest.json" />
+      
+      {/* Preconnect to critical domains */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      
+      {/* Core Web Vitals optimizations - preload critical fonts */}
+      <link 
+        rel="preload" 
+        href="/fonts/inter-var.woff2" 
+        as="font" 
+        type="font/woff2" 
+        crossOrigin="anonymous" 
+      />
       
       {/* Structured Data / JSON-LD */}
       <script type="application/ld+json">
-        {JSON.stringify(finalStructuredData)}
+        {finalSchema}
       </script>
       
       {/* Add breadcrumb schema if available */}
-      {breadcrumbSchema && (
+      {breadcrumbsSchema && (
         <script type="application/ld+json">
-          {JSON.stringify(breadcrumbSchema)}
+          {breadcrumbsSchema}
         </script>
       )}
-      
-      {/* PWA meta tags */}
-      <meta name="theme-color" content={isDark ? '#1A1A1A' : '#FFFFFF'} />
-      <meta name="mobile-web-app-capable" content="yes" />
-      <meta name="apple-mobile-web-app-capable" content="yes" />
-      <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-      
-      {/* Performance optimizations */}
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     </Helmet>
   );
 };

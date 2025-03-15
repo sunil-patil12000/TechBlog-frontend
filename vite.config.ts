@@ -8,6 +8,7 @@ import sitemap from 'vite-plugin-sitemap';
 import { imagetools } from 'vite-imagetools';
 import * as path from 'path';
 import { splitVendorChunkPlugin } from 'vite';
+import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
 
 // TypeScript interface for asset info
 interface AssetInfo {
@@ -24,6 +25,9 @@ export default defineConfig(({ mode }) => {
 
   // Site URL for sitemap
   const siteUrl = env.VITE_APP_URL || 'https://yourdomain.com';
+
+  // Determine if current build is SSG
+  const isSSG = process.env.SSG === 'true';
 
   return {
     plugins: [
@@ -46,6 +50,48 @@ export default defineConfig(({ mode }) => {
           ['quality', '80'],       // Good balance of quality/size
           ['as', 'picture'],       // Use <picture> elements
         ]),
+      }),
+      // More advanced image optimization
+      ViteImageOptimizer({
+        png: {
+          quality: 80,
+          compressionLevel: 9,
+        },
+        jpeg: {
+          quality: 80,
+          progressive: true,
+        },
+        jpg: {
+          quality: 80,
+          progressive: true,
+        },
+        webp: {
+          lossless: false,
+          quality: 80,
+          alphaQuality: 90,
+        },
+        avif: {
+          lossless: false,
+          quality: 75,
+        },
+        // SVG optimization
+        svg: {
+          multipass: true,
+          plugins: [
+            {
+              name: 'preset-default',
+              params: {
+                overrides: {
+                  removeViewBox: false,
+                  cleanupNumericValues: {
+                    floatPrecision: 2,
+                  },
+                },
+              },
+            },
+            'removeDimensions',
+          ],
+        },
       }),
       // Split vendor chunks for better caching
       splitVendorChunkPlugin(),
@@ -115,22 +161,52 @@ export default defineConfig(({ mode }) => {
                 networkTimeoutSeconds: 10,
               },
             },
+            // Cache images with a Cache First strategy
+            {
+              urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|avif)$/,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'images-cache',
+                expiration: {
+                  maxEntries: 100,
+                  maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+                },
+              },
+            },
+            // Cache CSS and JavaScript files with a Stale While Revalidate strategy
+            {
+              urlPattern: /\.(?:js|css)$/,
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'static-resources',
+                expiration: {
+                  maxEntries: 100,
+                  maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
+                },
+              },
+            },
           ],
+          // Don't precache sourcemaps or large chunks
+          ignoreURLParametersMatching: [/^utm_/, /^fbclid$/],
+          skipWaiting: true,
+          clientsClaim: true,
         },
       }),
       // Use a simpler configuration for the sitemap plugin
       // @ts-ignore - Adding a direct comment to suppress type errors
       sitemap({
         hostname: siteUrl,
-        // Note: We're using a separate script to generate a complete sitemap
-        // See scripts/generate-sitemap.ts and scripts/generate-sitemap-advanced.ts
+        // We're using our custom script for a complete sitemap
         outDir: './dist',
+        // Note: For a complete sitemap with dynamic routes, 
+        // we use the scripts/generate-sitemap-advanced.ts script
       }),
-      // Compression Plugin
+      // Compression Plugin - Gzip
       viteCompression({
         algorithm: 'gzip',
         threshold: 10240, // Only compress files > 10kb
       }),
+      // Compression Plugin - Brotli
       viteCompression({
         algorithm: 'brotliCompress',
         threshold: 10240,
@@ -155,6 +231,7 @@ export default defineConfig(({ mode }) => {
         '@types': path.resolve(__dirname, './src/types'),
         '@assets': path.resolve(__dirname, './src/assets'),
         '@styles': path.resolve(__dirname, './src/styles'),
+        '@lib': path.resolve(__dirname, './src/lib'),
       },
     },
     css: {
@@ -195,23 +272,47 @@ export default defineConfig(({ mode }) => {
           drop_console: process.env.NODE_ENV === 'production',
           drop_debugger: process.env.NODE_ENV === 'production',
         },
+        format: {
+          comments: false,
+        },
       },
       // Code splitting strategy
       rollupOptions: {
         output: {
-          manualChunks: {
-            vendor: [
-              'react', 
-              'react-dom', 
-              'react-router-dom', 
-              'framer-motion',
-              'axios'
-            ],
-            ui: [
-              'lucide-react',
-              'react-toastify',
-              'react-helmet-async'
-            ],
+          manualChunks: (id) => {
+            // Group React-related packages
+            if (id.includes('node_modules/react') || 
+                id.includes('node_modules/react-dom') || 
+                id.includes('node_modules/scheduler')) {
+              return 'vendor-react';
+            }
+            
+            // Group routing-related packages
+            if (id.includes('node_modules/react-router') || 
+                id.includes('node_modules/@remix-run/router') || 
+                id.includes('node_modules/history')) {
+              return 'vendor-router';
+            }
+            
+            // Group UI-related packages
+            if (id.includes('node_modules/@mui') || 
+                id.includes('node_modules/@emotion') || 
+                id.includes('node_modules/framer-motion') ||
+                id.includes('node_modules/lucide-react')) {
+              return 'vendor-ui';
+            }
+            
+            // Group utility libraries
+            if (id.includes('node_modules/axios') || 
+                id.includes('node_modules/lodash') || 
+                id.includes('node_modules/date-fns')) {
+              return 'vendor-utils';
+            }
+            
+            // Other node_modules stay in vendor
+            if (id.includes('node_modules')) {
+              return 'vendor';
+            }
           },
         },
       },
@@ -221,7 +322,7 @@ export default defineConfig(({ mode }) => {
       assetFileNames: (assetInfo: AssetInfo) => {
         const info = assetInfo.name.split('.');
         const extType = info[info.length - 1];
-        if (/\.(png|jpe?g|gif|svg|webp|ico)$/i.test(assetInfo.name)) {
+        if (/\.(png|jpe?g|gif|svg|webp|ico|avif)$/i.test(assetInfo.name)) {
           return `assets/images/[name]-[hash][extname]`;
         }
         if (/\.(woff2?|eot|ttf|otf)$/i.test(assetInfo.name)) {
@@ -234,6 +335,12 @@ export default defineConfig(({ mode }) => {
       entryFileNames: 'assets/js/[name]-[hash].js',
       // SSG options
       ssrManifest: true,
+      // Generate sourcemaps only in development
+      sourcemap: mode !== 'production',
+      // Configure modulePreload (improves performance)
+      modulePreload: {
+        polyfill: true,
+      },
     },
     optimizeDeps: {
       // Force inclusions for optimization
@@ -243,28 +350,38 @@ export default defineConfig(({ mode }) => {
         'react-router-dom',
         'framer-motion',
         'axios',
+        'react-helmet-async',
+        'date-fns',
       ],
       // Force exclusions from optimization
       exclude: [],
       // Force ESM dependencies to be bundled
       esbuildOptions: {
-        target: 'esnext',
+        // Node.js global to browser globalThis
+        define: {
+          global: 'globalThis',
+        },
       },
     },
-    preview: {
-      port: 4173,
-      host: true,
-    },
-    // SSR options for SSG builds
-    ssr: {
-      // Add any packages that need to be externalized
-      external: ['react-helmet-async'],
-      // Avoid warning for non-externalizable dependencies
-      noExternal: [
-        'react-toastify', 
-        'framer-motion', 
-        'react-lazy-load-image-component'
-      ],
+    // SSG specific configuration
+    ssgOptions: {
+      script: 'async',
+      formatting: 'minify',
+      crittersOptions: {
+        // Inline critical CSS
+        preload: 'swap',
+        // Don't inline preloaded resources
+        preloadFonts: false,
+        // Additional options for critters
+        pruneSource: true,
+        reduceInlineStyles: true,
+        mergeStylesheets: true,
+        additionalStylesheets: [],
+        // Handle keyframe animations
+        keyframes: true,
+        // Include shadow DOM content
+        shadowDOM: true,
+      },
     },
   };
 });

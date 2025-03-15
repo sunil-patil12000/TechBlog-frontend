@@ -1,0 +1,28 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "How AI is Changing Software Development in 2025",
+  "author": {
+    "@type": "Person",
+    "name": "Jane Developer",
+    "url": "https://yourdomain.com/authors/jane-developer"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Tech Blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://yourdomain.com/images/logo.png",
+      "width": "400",
+      "height": "60"
+    }
+  },
+  "datePublished": "2025-01-15T08:00:00+00:00",
+  "dateModified": "2025-01-16T10:30:00+00:00",
+  "image": "https://yourdomain.com/images/ai-dev-2025.jpg",
+  "description": "Discover how artificial intelligence is revolutionizing software development workflows and enabling developers to build better applications faster in 2025.",
+  "articleBody": "Artificial intelligence has made significant strides in recent years, and its impact on software development has been nothing short of revolutionary...",
+  "mainEntityOfPage": "https://yourdomain.com/blog/ai-changing-software-development-2025",
+  "keywords": "AI, software development, machine learning, coding automation, development tools",
+  "articleSection": "Technology"
+} 

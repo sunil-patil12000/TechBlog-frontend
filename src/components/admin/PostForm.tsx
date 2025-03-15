@@ -439,7 +439,7 @@ const PostForm: React.FC<PostFormProps> = ({
         <div className={errors.content ? 'border border-red-500 rounded-md' : ''}>
           <Editor
             onInit={(evt, editor) => editorRef.current = editor}
-            apiKey="40x3dpzcjqgnk363cl99atjq87rezlpc42yezi8n4umzlrfx" // Replace with your TinyMCE API key
+            apiKey="de10ptx41tdqr4xhvous2k4soayceyg58pgxlw42s9l6qvy9" // Replace with your TinyMCE API key
             value={content}
             onEditorChange={(newContent) => setContent(newContent)}
             init={{

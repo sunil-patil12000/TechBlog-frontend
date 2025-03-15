@@ -1,0 +1,62 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Event",
+  "name": "Tech Innovation Summit 2025",
+  "startDate": "2025-04-12T09:00:00+00:00",
+  "endDate": "2025-04-14T18:00:00+00:00",
+  "location": {
+    "@type": "Place",
+    "name": "Golden Gate Conference Center",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "123 Tech Boulevard",
+      "addressLocality": "San Francisco",
+      "addressRegion": "CA",
+      "postalCode": "94107",
+      "addressCountry": "US"
+    }
+  },
+  "image": "https://yourdomain.com/images/events/tech-summit-2025.jpg",
+  "description": "Join the premier tech event of 2025 featuring keynote speeches, workshops, and networking opportunities with industry leaders.",
+  "organizer": {
+    "@type": "Organization",
+    "name": "Tech Blog Events",
+    "url": "https://yourdomain.com/events"
+  },
+  "performer": [
+    {
+      "@type": "Person",
+      "name": "Dr. Sarah Chen",
+      "jobTitle": "AI Research Director"
+    },
+    {
+      "@type": "Person",
+      "name": "Michael Rodriguez",
+      "jobTitle": "CTO, Future Technologies"
+    }
+  ],
+  "offers": [
+    {
+      "@type": "Offer",
+      "name": "Early Bird",
+      "price": 399,
+      "priceCurrency": "USD",
+      "validFrom": "2025-01-01T00:00:00+00:00",
+      "validThrough": "2025-03-01T23:59:59+00:00",
+      "url": "https://yourdomain.com/events/tech-summit-2025/tickets/early-bird",
+      "availability": "LimitedAvailability"
+    },
+    {
+      "@type": "Offer",
+      "name": "Regular",
+      "price": 599,
+      "priceCurrency": "USD",
+      "validFrom": "2025-03-02T00:00:00+00:00",
+      "validThrough": "2025-04-11T23:59:59+00:00",
+      "url": "https://yourdomain.com/events/tech-summit-2025/tickets/regular",
+      "availability": "InStock"
+    }
+  ],
+  "eventStatus": "EventScheduled",
+  "eventAttendanceMode": "OfflineEventAttendanceMode"
+} 

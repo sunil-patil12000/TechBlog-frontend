@@ -1,4 +1,5 @@
 import { Article, WithContext } from 'schema-dts';
+import { BreadcrumbItem } from '../components/utils/SEO';
 
 export interface SEOProps {
   title: string;
@@ -16,6 +17,101 @@ export interface SEOProps {
     tags?: string[];
     section?: string;
   };
+}
+
+// Types for structured data
+export interface ArticleSchema {
+  headline: string;
+  description: string;
+  image?: string;
+  datePublished?: string;
+  dateModified?: string;
+  author?: {
+    name: string;
+    url?: string;
+  }[];
+  publisher?: {
+    name: string;
+    logo?: string;
+  };
+  keywords?: string[];
+  articleSection?: string;
+}
+
+export interface EventSchema {
+  name: string;
+  startDate: string;
+  endDate?: string;
+  location: {
+    name: string;
+    address: string;
+  };
+  image?: string;
+  description?: string;
+  organizer?: {
+    name: string;
+    url?: string;
+  };
+  offers?: {
+    price?: number;
+    priceCurrency?: string;
+    availability?: string;
+    validFrom?: string;
+  }[];
+  eventStatus?: 'EventScheduled' | 'EventCancelled' | 'EventPostponed' | 'EventRescheduled';
+  eventAttendanceMode?: 'OfflineEventAttendanceMode' | 'OnlineEventAttendanceMode' | 'MixedEventAttendanceMode';
+  performerName?: string;
+}
+
+export interface ProductSchema {
+  name: string;
+  image: string;
+  description: string;
+  brand?: string;
+  sku?: string;
+  gtin?: string;
+  offers?: {
+    price: number;
+    priceCurrency: string;
+    availability: string;
+    url?: string;
+    priceValidUntil?: string;
+    itemCondition?: string;
+    seller?: {
+      name: string;
+      url?: string;
+    };
+  }[];
+  aggregateRating?: {
+    ratingValue: number;
+    reviewCount: number;
+    bestRating?: number;
+  };
+  review?: {
+    author: string;
+    datePublished: string;
+    reviewRating: {
+      ratingValue: number;
+    };
+    reviewBody?: string;
+  }[];
+}
+
+export interface FAQSchema {
+  questions: {
+    question: string;
+    answer: string;
+  }[];
+}
+
+export interface VideoSchema {
+  name: string;
+  description: string;
+  thumbnailUrl: string;
+  uploadDate: string;
+  duration?: string; // ISO 8601 format
+  contentUrl?: string;
+  embedUrl?: string;
 }
 
 /**
@@ -82,57 +178,189 @@ export const generateSEOMetadata = ({
 /**
  * Generates JSON-LD structured data for a blog article
  */
-export const generateArticleSchema = (
-  {
-    title,
-    description,
-    url,
-    imageUrl,
-    datePublished,
-    dateModified,
-    authorName,
-    authorUrl,
-    publisherName = 'Modern Tech Blog',
-    publisherLogoUrl = '/images/logo.png',
-  }: {
-    title: string;
-    description: string;
-    url: string;
-    imageUrl: string;
-    datePublished: string;
-    dateModified?: string;
-    authorName: string;
-    authorUrl?: string;
-    publisherName?: string;
-    publisherLogoUrl?: string;
-  }
-): WithContext<Article> => {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'Article',
-    headline: title,
-    description: description,
-    image: imageUrl,
-    datePublished,
-    dateModified: dateModified || datePublished,
-    author: {
+export const generateArticleSchema = (article: ArticleSchema): string => {
+  return generateStructuredData('Article', {
+    headline: truncateText(article.headline, 110), // Max 110 chars for Google
+    description: article.description,
+    image: article.image,
+    datePublished: article.datePublished,
+    dateModified: article.dateModified || article.datePublished,
+    author: article.author?.map(a => ({
       '@type': 'Person',
-      name: authorName,
-      url: authorUrl,
-    },
-    publisher: {
+      name: a.name,
+      url: a.url,
+    })),
+    publisher: article.publisher && {
       '@type': 'Organization',
-      name: publisherName,
-      logo: {
+      name: article.publisher.name,
+      logo: article.publisher.logo && {
         '@type': 'ImageObject',
-        url: publisherLogoUrl,
+        url: article.publisher.logo,
       },
     },
+    keywords: article.keywords?.join(', '),
+    articleSection: article.articleSection,
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': url,
+      '@id': generateCanonicalUrl(`/blog/${article.headline.toLowerCase().replace(/[^\w]+/g, '-')}`),
     },
-  };
+  });
+};
+
+/**
+ * Generates JSON-LD structured data for an event
+ */
+export const generateEventSchema = (event: EventSchema): string => {
+  return generateStructuredData('Event', {
+    name: event.name,
+    startDate: event.startDate,
+    endDate: event.endDate,
+    location: {
+      '@type': 'Place',
+      name: event.location.name,
+      address: event.location.address,
+    },
+    image: event.image,
+    description: event.description,
+    organizer: event.organizer && {
+      '@type': 'Organization',
+      name: event.organizer.name,
+      url: event.organizer.url,
+    },
+    offers: event.offers?.map(offer => ({
+      '@type': 'Offer',
+      price: offer.price,
+      priceCurrency: offer.priceCurrency,
+      availability: offer.availability,
+      validFrom: offer.validFrom,
+    })),
+    eventStatus: event.eventStatus && `https://schema.org/${event.eventStatus}`,
+    eventAttendanceMode: event.eventAttendanceMode && `https://schema.org/${event.eventAttendanceMode}`,
+    performer: event.performerName && {
+      '@type': 'Person',
+      name: event.performerName,
+    },
+  });
+};
+
+/**
+ * Generates JSON-LD structured data for a product review
+ */
+export const generateProductSchema = (product: ProductSchema): string => {
+  return generateStructuredData('Product', {
+    name: product.name,
+    image: product.image,
+    description: product.description,
+    brand: product.brand && {
+      '@type': 'Brand',
+      name: product.brand,
+    },
+    sku: product.sku,
+    gtin: product.gtin,
+    offers: product.offers?.map(offer => ({
+      '@type': 'Offer',
+      price: offer.price,
+      priceCurrency: offer.priceCurrency,
+      availability: offer.availability && `https://schema.org/${offer.availability}`,
+      url: offer.url,
+      priceValidUntil: offer.priceValidUntil,
+      itemCondition: offer.itemCondition && `https://schema.org/${offer.itemCondition}`,
+      seller: offer.seller && {
+        '@type': 'Organization',
+        name: offer.seller.name,
+        url: offer.seller.url,
+      },
+    })),
+    aggregateRating: product.aggregateRating && {
+      '@type': 'AggregateRating',
+      ratingValue: product.aggregateRating.ratingValue,
+      reviewCount: product.aggregateRating.reviewCount,
+      bestRating: product.aggregateRating.bestRating || 5,
+    },
+    review: product.review?.map(r => ({
+      '@type': 'Review',
+      author: {
+        '@type': 'Person',
+        name: r.author,
+      },
+      datePublished: r.datePublished,
+      reviewRating: {
+        '@type': 'Rating',
+        ratingValue: r.reviewRating.ratingValue,
+      },
+      reviewBody: r.reviewBody,
+    })),
+  });
+};
+
+/**
+ * Generates JSON-LD structured data for FAQ pages
+ */
+export const generateFAQSchema = (faq: FAQSchema): string => {
+  return generateStructuredData('FAQPage', {
+    mainEntity: faq.questions.map(q => ({
+      '@type': 'Question',
+      name: q.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: q.answer,
+      },
+    })),
+  });
+};
+
+/**
+ * Generates JSON-LD structured data for Video content
+ */
+export const generateVideoSchema = (video: VideoSchema): string => {
+  return generateStructuredData('VideoObject', {
+    name: video.name,
+    description: video.description,
+    thumbnailUrl: video.thumbnailUrl,
+    uploadDate: video.uploadDate,
+    duration: video.duration,
+    contentUrl: video.contentUrl,
+    embedUrl: video.embedUrl,
+  });
+};
+
+/**
+ * Generates breadcrumb structured data from breadcrumb items
+ */
+export const generateBreadcrumbSchema = (breadcrumbs: BreadcrumbItem[]): string => {
+  if (!breadcrumbs || breadcrumbs.length === 0) return '';
+  
+  return generateStructuredData('BreadcrumbList', {
+    itemListElement: breadcrumbs.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: generateCanonicalUrl(item.url),
+    })),
+  });
+};
+
+/**
+ * Formats keywords for SEO optimization
+ */
+export const formatKeywords = (keywords: string[] | string): string => {
+  if (Array.isArray(keywords)) {
+    return keywords.join(', ');
+  }
+  return keywords;
+};
+
+/**
+ * Extract primary keyword from a list of keywords
+ */
+export const getPrimaryKeyword = (keywords: string[] | string): string => {
+  if (Array.isArray(keywords) && keywords.length > 0) {
+    return keywords[0];
+  }
+  if (typeof keywords === 'string') {
+    return keywords.split(',')[0].trim();
+  }
+  return '';
 };
 
 /**
@@ -164,4 +392,28 @@ export const blurUpImage = (src: string, placeholderSize = 10): string => {
   // This is a placeholder implementation
   // In a real implementation, you'd use a server-side API to generate a tiny placeholder
   return `${src}?width=${placeholderSize}&quality=10`;
+};
+
+// SEO Helper functions
+export const truncateText = (text: string, maxLength: number): string => {
+  if (!text || text.length <= maxLength) return text;
+  return text.substring(0, maxLength - 3) + '...';
+};
+
+export const generateCanonicalUrl = (path: string): string => {
+  const siteUrl = import.meta.env.VITE_APP_URL || 'https://yourdomain.com';
+  // Remove trailing slash from site URL if it exists
+  const baseUrl = siteUrl.endsWith('/') ? siteUrl.slice(0, -1) : siteUrl;
+  // Ensure path starts with a slash
+  const formattedPath = path.startsWith('/') ? path : `/${path}`;
+  return `${baseUrl}${formattedPath}`;
+};
+
+export const generateStructuredData = <T extends object>(type: string, data: T): string => {
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': type,
+    ...data,
+  };
+  return JSON.stringify(structuredData);
 }; 

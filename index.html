@@ -2,13 +2,120 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React + TS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0" />
+    <meta name="theme-color" content="#4f46e5" />
+    
+    <!-- SEO: Basic page metadata -->
+    <title>Tech Blog - Latest Tech News, Reviews, and Insights</title>
+    <meta name="description" content="Your source for the latest tech news, gadget reviews, event coverage, and tech articles. Stay updated with the newest developments in technology." />
+    <meta name="keywords" content="tech news, technology blog, gadget reviews, tech events, software development, artificial intelligence, mobile tech" />
+    
+    <!-- SEO: Robots information -->
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    
+    <!-- Favicons and manifest -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Resource hints for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" href="/fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin />
+    
+    <!-- Critical CSS for fast render -->
+    <link rel="stylesheet" href="/styles/critical.css" media="all" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://yourdomain.com/" />
+    <meta property="og:title" content="Tech Blog - Latest Tech News, Reviews, and Insights" />
+    <meta property="og:description" content="Your source for the latest tech news, gadget reviews, event coverage, and tech articles. Stay updated with the newest developments in technology." />
+    <meta property="og:image" content="https://yourdomain.com/images/og-default.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="Tech Blog" />
+    <meta property="og:locale" content="en_US" />
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@techblog" />
+    <meta name="twitter:title" content="Tech Blog - Latest Tech News, Reviews, and Insights" />
+    <meta name="twitter:description" content="Your source for the latest tech news, gadget reviews, event coverage, and tech articles." />
+    <meta name="twitter:image" content="https://yourdomain.com/images/og-default.jpg" />
+    
+    <!-- Web app capability tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    
+    <!-- Google / Search Engine Tags -->
+    <meta itemprop="name" content="Tech Blog - Latest Tech News, Reviews, and Insights" />
+    <meta itemprop="description" content="Your source for the latest tech news, gadget reviews, event coverage, and tech articles." />
+    <meta itemprop="image" content="https://yourdomain.com/images/og-default.jpg" />
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://yourdomain.com/" />
+    
+    <!-- Web Vitals Inline Script -->
+    <script>
+      // Initialize performance measurement
+      if ('PerformanceObserver' in window) {
+        try {
+          // Create performance observer for LCP
+          new PerformanceObserver((entryList) => {
+            const entries = entryList.getEntries();
+            if (entries.length > 0) {
+              const lcpElement = entries[entries.length - 1];
+              console.log('LCP:', lcpElement.startTime);
+              
+              // Store in window for analytics later
+              window.__LCP = lcpElement.startTime;
+            }
+          }).observe({ type: 'largest-contentful-paint', buffered: true });
+          
+          // Observe CLS
+          let clsScore = 0;
+          new PerformanceObserver((entryList) => {
+            for (const entry of entryList.getEntries()) {
+              if (!entry.hadRecentInput) {
+                clsScore += entry.value;
+              }
+            }
+            console.log('CLS:', clsScore);
+            
+            // Store in window for analytics later
+            window.__CLS = clsScore;
+          }).observe({ type: 'layout-shift', buffered: true });
+          
+          // Observe FID
+          new PerformanceObserver((entryList) => {
+            const entries = entryList.getEntries();
+            if (entries.length > 0) {
+              const fidValue = entries[0].processingStart - entries[0].startTime;
+              console.log('FID:', fidValue);
+              
+              // Store in window for analytics later
+              window.__FID = fidValue;
+            }
+          }).observe({ type: 'first-input', buffered: true });
+        } catch (e) {
+          console.error('Performance observer error:', e);
+        }
+      }
+    </script>
   </head>
   <body>
     <div id="root">
+      <noscript>
+        <div style="padding: 20px; text-align: center; font-family: system-ui, sans-serif;">
+          <h1>JavaScript Required</h1>
+          <p>This website requires JavaScript to function properly. Please enable JavaScript in your browser settings.</p>
+        </div>
+      </noscript>
     </div>
+    <!-- Preload critical app data -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
