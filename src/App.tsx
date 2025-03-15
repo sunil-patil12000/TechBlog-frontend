@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 import { AuthProvider, ThemeProvider, BlogProvider, FilterProvider, NotificationProvider } from './contexts';
 import { NotificationsProvider } from './contexts/NotificationsContext';
 import Layout from './components/layout/Layout';
@@ -59,104 +59,102 @@ import PostAnalyticsPage from './pages/admin/PostAnalyticsPage';
 function App() {
   return (
     <ErrorBoundary>
-      <Router>
-        <ScrollToTop />
-        <ThemeProvider>
-          <AuthProvider>
-            <BlogProvider>
-              <FilterProvider>
-                <NotificationProvider>
-                  <NotificationsProvider>
-                    <Suspense fallback={<GlobalLoader />}>
-                      <Routes>
-                        {/* Auth Routes - Minimal Layout */}
-                        <Route element={<AuthLayout />}>
-                          <Route path="/login" element={<LoginPage />} />
-                          <Route path="/register" element={<RegisterPage />} />
-                          <Route path="/unauthorized" element={<UnauthorizedPage />} />
-                        </Route>
-                        
-                        {/* Admin Routes - Admin Layout */}
-                        <Route element={
-                          <ProtectedRoute adminOnly={true}>
-                            <AdminLayout />
-                          </ProtectedRoute>
-                        }>
-                          <Route path="/admin" element={<DashboardPage />} />
-                          <Route path="/admin/posts" element={<PostsManagePage />} />
-                          <Route path="/admin/posts/new" element={<CreatePostPage />} />
-                          <Route path="/admin/posts/edit/:id" element={<CreatePostPage />} />
-                          <Route path="/admin/scheduled-posts" element={<ScheduledPostsPage />} />
-                          <Route path="/admin/categories" element={<CategoriesManagePage />} />
-                          <Route path="/admin/tags" element={<TagsManagePage />} />
-                          <Route path="/admin/media" element={<MediaLibraryPage />} />
-                          <Route path="/admin/comments" element={<CommentsManagePage />} />
-                          <Route path="/admin/events" element={<EventsManagePage />} />
-                          <Route path="/admin/events/new" element={<CreateEventPage />} />
-                          <Route path="/admin/events/edit/:id" element={<CreateEventPage />} />
-                          <Route path="/admin/users" element={<UsersManagePage />} />
-                          <Route path="/admin/users/new" element={<CreateUserPage />} />
-                          <Route path="/admin/users/edit/:id" element={<CreateUserPage />} />
-                          <Route path="/admin/analytics" element={<AnalyticsPage />} />
-                          <Route path="/admin/analytics/posts/:postId" element={<PostAnalyticsPage />} />
-                          <Route path="/admin/broken-links" element={<BrokenLinksPage />} />
-                          <Route path="/admin/test-upload" element={<TestUploadPage />} />
-                        </Route>
+      <ScrollToTop />
+      <ThemeProvider>
+        <AuthProvider>
+          <BlogProvider>
+            <FilterProvider>
+              <NotificationProvider>
+                <NotificationsProvider>
+                  <Suspense fallback={<GlobalLoader />}>
+                    <Routes>
+                      {/* Auth Routes - Minimal Layout */}
+                      <Route element={<AuthLayout />}>
+                        <Route path="/login" element={<LoginPage />} />
+                        <Route path="/register" element={<RegisterPage />} />
+                        <Route path="/unauthorized" element={<UnauthorizedPage />} />
+                      </Route>
+                      
+                      {/* Admin Routes - Admin Layout */}
+                      <Route element={
+                        <ProtectedRoute adminOnly={true}>
+                          <AdminLayout />
+                        </ProtectedRoute>
+                      }>
+                        <Route path="/admin" element={<DashboardPage />} />
+                        <Route path="/admin/posts" element={<PostsManagePage />} />
+                        <Route path="/admin/posts/new" element={<CreatePostPage />} />
+                        <Route path="/admin/posts/edit/:id" element={<CreatePostPage />} />
+                        <Route path="/admin/scheduled-posts" element={<ScheduledPostsPage />} />
+                        <Route path="/admin/categories" element={<CategoriesManagePage />} />
+                        <Route path="/admin/tags" element={<TagsManagePage />} />
+                        <Route path="/admin/media" element={<MediaLibraryPage />} />
+                        <Route path="/admin/comments" element={<CommentsManagePage />} />
+                        <Route path="/admin/events" element={<EventsManagePage />} />
+                        <Route path="/admin/events/new" element={<CreateEventPage />} />
+                        <Route path="/admin/events/edit/:id" element={<CreateEventPage />} />
+                        <Route path="/admin/users" element={<UsersManagePage />} />
+                        <Route path="/admin/users/new" element={<CreateUserPage />} />
+                        <Route path="/admin/users/edit/:id" element={<CreateUserPage />} />
+                        <Route path="/admin/analytics" element={<AnalyticsPage />} />
+                        <Route path="/admin/analytics/posts/:postId" element={<PostAnalyticsPage />} />
+                        <Route path="/admin/broken-links" element={<BrokenLinksPage />} />
+                        <Route path="/admin/test-upload" element={<TestUploadPage />} />
+                      </Route>
 
-                        {/* Public Routes - Main Layout */}
-                        <Route element={<Layout />}>
-                          <Route path="/" element={<HomePage />} />
-                          <Route path="/blog" element={<BlogPage />} />
-                          <Route path="/blog/:slug" element={<BlogPostPage />} />
-                          <Route path="/post/:slug" element={<PostDetail />} />
-                          <Route path="/tech-news" element={<BlogPage />} />
-                          <Route path="/tech-news/latest" element={<LatestPostsPage />} />
-                          <Route path="/tech-news/featured" element={<BlogPage category="featured" />} />
-                          <Route path="/tech-news/popular" element={<BlogPage category="popular" />} />
-                          <Route path="/about" element={<AboutPage />} />
-                          <Route path="/about-us" element={<AboutUsPage />} />
-                          <Route path="/contact" element={<ContactPage />} />
-                          <Route path="/privacy" element={<PrivacyPage />} />
-                          <Route path="/archives" element={<ArchivesPage />} />
-                          <Route path="/projects" element={<ProjectsPage />} />
-                          <Route path="/events" element={<EventsPage />} />
-                          <Route path="/events/latest" element={<EventsPage filter="latest" />} />
-                          <Route path="/events/featured" element={<EventsPage filter="featured" />} />
-                          <Route path="/events/popular" element={<EventsPage filter="popular" />} />
-                          <Route path="/events/:slug" element={<EventDetailPage />} />
-                          <Route path="/test-images" element={<TestImagesPage />} />
-                          <Route path="/test-categories" element={<TestPage />} />
-                          <Route path="/image-debug" element={<ImageDebugPage />} />
-                          <Route path="/category/:category" element={<CategoryPage />} />
-                          <Route path="/categories" element={<CategoriesPage />} />
-                          <Route path="/tag/:slug" element={<BlogPage />} />
-                          <Route path="/latest" element={<LatestPostsPage />} />
-                          <Route path="/author/:id" element={<AuthorPage />} />
-                          
-                          {/* Protected User Routes (still in main layout) */}
-                          <Route path="/profile" element={
-                            <ProtectedRoute>
-                              <ProfilePage />
-                            </ProtectedRoute>
-                          } />
-                          <Route path="/settings" element={
-                            <ProtectedRoute>
-                              <SettingsPage />
-                            </ProtectedRoute>
-                          } />
-                          
-                          {/* Catch-all Route */}
-                          <Route path="*" element={<NotFoundPage />} />
-                        </Route>
-                      </Routes>
-                    </Suspense>
-                  </NotificationsProvider>
-                </NotificationProvider>
-              </FilterProvider>
-            </BlogProvider>
-          </AuthProvider>
-        </ThemeProvider>
-      </Router>
+                      {/* Public Routes - Main Layout */}
+                      <Route element={<Layout />}>
+                        <Route path="/" element={<HomePage />} />
+                        <Route path="/blog" element={<BlogPage />} />
+                        <Route path="/blog/:slug" element={<BlogPostPage />} />
+                        <Route path="/post/:slug" element={<PostDetail />} />
+                        <Route path="/tech-news" element={<BlogPage />} />
+                        <Route path="/tech-news/latest" element={<LatestPostsPage />} />
+                        <Route path="/tech-news/featured" element={<BlogPage category="featured" />} />
+                        <Route path="/tech-news/popular" element={<BlogPage category="popular" />} />
+                        <Route path="/about" element={<AboutPage />} />
+                        <Route path="/about-us" element={<AboutUsPage />} />
+                        <Route path="/contact" element={<ContactPage />} />
+                        <Route path="/privacy" element={<PrivacyPage />} />
+                        <Route path="/archives" element={<ArchivesPage />} />
+                        <Route path="/projects" element={<ProjectsPage />} />
+                        <Route path="/events" element={<EventsPage />} />
+                        <Route path="/events/latest" element={<EventsPage filter="latest" />} />
+                        <Route path="/events/featured" element={<EventsPage filter="featured" />} />
+                        <Route path="/events/popular" element={<EventsPage filter="popular" />} />
+                        <Route path="/events/:slug" element={<EventDetailPage />} />
+                        <Route path="/test-images" element={<TestImagesPage />} />
+                        <Route path="/test-categories" element={<TestPage />} />
+                        <Route path="/image-debug" element={<ImageDebugPage />} />
+                        <Route path="/category/:category" element={<CategoryPage />} />
+                        <Route path="/categories" element={<CategoriesPage />} />
+                        <Route path="/tag/:slug" element={<BlogPage />} />
+                        <Route path="/latest" element={<LatestPostsPage />} />
+                        <Route path="/author/:id" element={<AuthorPage />} />
+                        
+                        {/* Protected User Routes (still in main layout) */}
+                        <Route path="/profile" element={
+                          <ProtectedRoute>
+                            <ProfilePage />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/settings" element={
+                          <ProtectedRoute>
+                            <SettingsPage />
+                          </ProtectedRoute>
+                        } />
+                        
+                        {/* Catch-all Route */}
+                        <Route path="*" element={<NotFoundPage />} />
+                      </Route>
+                    </Routes>
+                  </Suspense>
+                </NotificationsProvider>
+              </NotificationProvider>
+            </FilterProvider>
+          </BlogProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }

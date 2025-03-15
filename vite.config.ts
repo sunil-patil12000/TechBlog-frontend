@@ -5,7 +5,17 @@ import viteCompression from 'vite-plugin-compression';
 // @ts-ignore - rollup-plugin-visualizer might not have type declarations
 import { visualizer } from 'rollup-plugin-visualizer';
 import sitemap from 'vite-plugin-sitemap';
+import { imagetools } from 'vite-imagetools';
 import * as path from 'path';
+import { splitVendorChunkPlugin } from 'vite';
+
+// TypeScript interface for asset info
+interface AssetInfo {
+  name: string;
+  source: Buffer | string;
+  type: string;
+  [key: string]: any;
+}
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -28,6 +38,17 @@ export default defineConfig(({ mode }) => {
         // @ts-ignore - fastRefresh exists but might not be in the types
         fastRefresh: true,
       }),
+      // Image optimization
+      imagetools({
+        include: ['**/*.{jpg,jpeg,png,webp}'],
+        defaultDirectives: new URLSearchParams([
+          ['format', 'webp;avif'], // Output webp and avif formats
+          ['quality', '80'],       // Good balance of quality/size
+          ['as', 'picture'],       // Use <picture> elements
+        ]),
+      }),
+      // Split vendor chunks for better caching
+      splitVendorChunkPlugin(),
       // Progressive Web App support
       VitePWA({
         registerType: 'autoUpdate',
@@ -97,43 +118,13 @@ export default defineConfig(({ mode }) => {
           ],
         },
       }),
-      // Sitemap Plugin
+      // Use a simpler configuration for the sitemap plugin
+      // @ts-ignore - Adding a direct comment to suppress type errors
       sitemap({
         hostname: siteUrl,
-        // Define static routes
-        urls: [
-          { url: '/', changefreq: 'daily', priority: 1.0, lastmod: new Date().toISOString() },
-          { url: '/blog', changefreq: 'daily', priority: 0.9 },
-          { url: '/tech-news', changefreq: 'daily', priority: 0.9 },
-          { url: '/tech-news/latest', changefreq: 'daily', priority: 0.8 },
-          { url: '/tech-news/featured', changefreq: 'weekly', priority: 0.8 },
-          { url: '/tech-news/popular', changefreq: 'weekly', priority: 0.8 },
-          { url: '/about', changefreq: 'monthly', priority: 0.7 },
-          { url: '/about-us', changefreq: 'monthly', priority: 0.7 },
-          { url: '/contact', changefreq: 'monthly', priority: 0.7 },
-          { url: '/privacy', changefreq: 'monthly', priority: 0.5 },
-          { url: '/archives', changefreq: 'weekly', priority: 0.6 },
-          { url: '/projects', changefreq: 'weekly', priority: 0.7 },
-          { url: '/events', changefreq: 'daily', priority: 0.8 },
-          { url: '/events/latest', changefreq: 'daily', priority: 0.7 },
-          { url: '/events/featured', changefreq: 'weekly', priority: 0.7 },
-          { url: '/events/popular', changefreq: 'weekly', priority: 0.7 },
-          { url: '/categories', changefreq: 'weekly', priority: 0.6 },
-          { url: '/latest', changefreq: 'daily', priority: 0.8 },
-        ],
-        exclude: [
-          '/admin/**',
-          '/login',
-          '/register',
-          '/profile',
-          '/settings',
-          '/unauthorized',
-          '/test-*',
-          '/**/*-debug*',
-          '/**/*.jpg',
-          '/**/*.png',
-          '/**/*.gif',
-        ]
+        // Note: We're using a separate script to generate a complete sitemap
+        // See scripts/generate-sitemap.ts and scripts/generate-sitemap-advanced.ts
+        outDir: './dist',
       }),
       // Compression Plugin
       viteCompression({
@@ -192,7 +183,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
-      // Bundle size optimization
+      // SSG requires a compatible output target
       target: 'esnext',
       outDir: 'dist',
       assetsDir: 'assets',
@@ -227,7 +218,7 @@ export default defineConfig(({ mode }) => {
       // Chunk size warning
       chunkSizeWarningLimit: 1000, // 1MB
       // Asset file naming
-      assetFileNames: (assetInfo) => {
+      assetFileNames: (assetInfo: AssetInfo) => {
         const info = assetInfo.name.split('.');
         const extType = info[info.length - 1];
         if (/\.(png|jpe?g|gif|svg|webp|ico)$/i.test(assetInfo.name)) {
@@ -241,6 +232,8 @@ export default defineConfig(({ mode }) => {
       // Output file naming
       chunkFileNames: 'assets/js/[name]-[hash].js',
       entryFileNames: 'assets/js/[name]-[hash].js',
+      // SSG options
+      ssrManifest: true,
     },
     optimizeDeps: {
       // Force inclusions for optimization
@@ -261,6 +254,17 @@ export default defineConfig(({ mode }) => {
     preview: {
       port: 4173,
       host: true,
+    },
+    // SSR options for SSG builds
+    ssr: {
+      // Add any packages that need to be externalized
+      external: ['react-helmet-async'],
+      // Avoid warning for non-externalizable dependencies
+      noExternal: [
+        'react-toastify', 
+        'framer-motion', 
+        'react-lazy-load-image-component'
+      ],
     },
   };
 });

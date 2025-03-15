@@ -35,6 +35,8 @@ import LikeButton from '../components/blog/LikeButton';
 import Tag from '../components/ui/Tag';
 import NormalizedImage from '../components/common/NormalizedImage';
 import Avatar from '../components/shared/Avatar';
+import OptimizedImage from '../components/ui/OptimizedImage';
+import BreadcrumbNav from '../components/ui/BreadcrumbNav';
 
 // Hooks and Context
 import { useTheme } from '../contexts/ThemeContext';
@@ -144,6 +146,9 @@ const BlogPostPage: React.FC = () => {
   
   const contentRef = useRef<HTMLDivElement>(null);
   const { scrollPosition } = useScrollPosition();
+  
+  // Add breadcrumb state
+  const [breadcrumbs, setBreadcrumbs] = useState<Array<{name: string, url: string}>>([]);
   
   // Fetch post data on component mount
   useEffect(() => {
@@ -352,6 +357,31 @@ const BlogPostPage: React.FC = () => {
     // Original comment submission logic...
   };
 
+  // Generate breadcrumbs after post is loaded
+  useEffect(() => {
+    if (post) {
+      const crumbs = [
+        { name: 'Blog', url: '/blog' }
+      ];
+      
+      // Add category if available
+      if (post.category) {
+        crumbs.push({
+          name: post.category.name,
+          url: `/category/${post.category.slug}`
+        });
+      }
+      
+      // Add current post
+      crumbs.push({
+        name: post.title,
+        url: `/blog/${post.slug}`
+      });
+      
+      setBreadcrumbs(crumbs);
+    }
+  }, [post]);
+
   // Helper to get the appropriate thumbnail for a post
   function getPostThumbnail(post: Post | null): string {
     if (!post) return '';
@@ -393,18 +423,61 @@ const BlogPostPage: React.FC = () => {
     return post.title;
   };
 
+  // Generate structured data for the article
+  const generateStructuredData = () => {
+    if (!post) return null;
+    
+    // Format the date to ISO format if needed
+    const publishDate = post.publishedAt ? new Date(post.publishedAt).toISOString() : new Date().toISOString();
+    
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: post.title,
+      description: post.excerpt,
+      image: post.featuredImage ? normalizeImageUrl(post.featuredImage) : normalizeImageUrl(DEFAULT_IMAGE),
+      datePublished: publishDate,
+      dateModified: publishDate,
+      author: {
+        '@type': 'Person',
+        name: post.author?.name || 'Unknown',
+        url: post.author?.id ? `/author/${post.author.id}` : null
+      },
+      publisher: {
+        '@type': 'Organization',
+        name: 'Tech Blog',
+        logo: {
+          '@type': 'ImageObject',
+          url: '/images/logo.png'
+        }
+      },
+      mainEntityOfPage: {
+        '@type': 'WebPage',
+        '@id': `${window.location.origin}/blog/${post.slug}`
+      }
+    };
+  };
+
   return (
     <>
       <SEO
         title={post?.title || 'Blog Post'}
         description={post?.excerpt || 'Loading blog post...'}
-        ogImage={post?.thumbnail}
+        ogImage={post?.featuredImage || post?.thumbnail}
         ogType="article"
+        breadcrumbs={breadcrumbs}
+        canonical={post ? `/blog/${post.slug}` : undefined}
         article={{
           publishedTime: post?.publishedAt,
-          authors: [{ name: post?.author?.name || 'Unknown Author' }],
-          tags: post?.tags?.map(tag => tag.name) || []
+          modifiedTime: post?.updatedAt || post?.publishedAt,
+          authors: post?.author ? [{ 
+            name: post.author.name,
+            website: post.author.id ? `${window.location.origin}/author/${post.author.id}` : undefined
+          }] : undefined,
+          tags: post?.tags?.map(tag => tag.name) || [],
+          section: post?.category?.name
         }}
+        structuredData={generateStructuredData()}
       />
       
       {isLoading ? (
@@ -435,6 +508,14 @@ const BlogPostPage: React.FC = () => {
                     transition={{ duration: 0.5 }}
                     className="max-w-4xl"
                   >
+                    {/* Add breadcrumb at the top */}
+                    <BreadcrumbNav 
+                      items={breadcrumbs}
+                      className="mb-6 justify-center text-gray-200"
+                      itemClassName="text-gray-300 hover:text-white transition-colors"
+                      separatorClassName="mx-2 text-gray-400"
+                    />
+                  
                     {post.category && (
                       <Link 
                         to={`/category/${post.category.slug}`}
@@ -530,15 +611,12 @@ const BlogPostPage: React.FC = () => {
 
                   {post.images && post.images.length > 0 && (
                     <div className="mb-8 relative">
-                      <NormalizedImage
+                      <OptimizedImage
                         src={post.images[0].url}
                         alt={post.images[0].alt || post.title}
-                        className="w-full h-auto rounded-lg shadow-md"
-                        fallback={
-                          <div className="w-full h-64 bg-gray-200 dark:bg-gray-700 flex items-center justify-center rounded-lg">
-                            <span className="text-gray-400">No image available</span>
-                          </div>
-                        }
+                        className="w-full rounded-lg shadow-md"
+                        objectFit="cover"
+                        priority={true} // Priority load for featured image
                       />
                     </div>
                   )}
