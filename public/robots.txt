@@ -1,0 +1,16 @@
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Disallow admin and auth pages
+Disallow: /admin/
+Disallow: /login
+Disallow: /register
+Disallow: /profile
+Disallow: /settings
+Disallow: /unauthorized
+
+# Sitemap location
+Sitemap: https://yourdomain.com/sitemap.xml
+
+# Note: Replace "https://yourdomain.com" with your actual domain once deployed 

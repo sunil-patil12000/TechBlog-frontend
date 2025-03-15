@@ -4,12 +4,16 @@ import { VitePWA } from 'vite-plugin-pwa';
 import viteCompression from 'vite-plugin-compression';
 // @ts-ignore - rollup-plugin-visualizer might not have type declarations
 import { visualizer } from 'rollup-plugin-visualizer';
+import sitemap from 'vite-plugin-sitemap';
 import * as path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
   const env = loadEnv(mode, process.cwd(), '');
+
+  // Site URL for sitemap
+  const siteUrl = env.VITE_APP_URL || 'https://yourdomain.com';
 
   return {
     plugins: [
@@ -27,7 +31,7 @@ export default defineConfig(({ mode }) => {
       // Progressive Web App support
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
+        includeAssets: ['favicon.ico', 'robots.txt', 'sitemap.xml', 'apple-touch-icon.png'],
         manifest: {
           name: 'Tech Blog',
           short_name: 'TechBlog',
@@ -92,6 +96,44 @@ export default defineConfig(({ mode }) => {
             },
           ],
         },
+      }),
+      // Sitemap Plugin
+      sitemap({
+        hostname: siteUrl,
+        // Define static routes
+        urls: [
+          { url: '/', changefreq: 'daily', priority: 1.0, lastmod: new Date().toISOString() },
+          { url: '/blog', changefreq: 'daily', priority: 0.9 },
+          { url: '/tech-news', changefreq: 'daily', priority: 0.9 },
+          { url: '/tech-news/latest', changefreq: 'daily', priority: 0.8 },
+          { url: '/tech-news/featured', changefreq: 'weekly', priority: 0.8 },
+          { url: '/tech-news/popular', changefreq: 'weekly', priority: 0.8 },
+          { url: '/about', changefreq: 'monthly', priority: 0.7 },
+          { url: '/about-us', changefreq: 'monthly', priority: 0.7 },
+          { url: '/contact', changefreq: 'monthly', priority: 0.7 },
+          { url: '/privacy', changefreq: 'monthly', priority: 0.5 },
+          { url: '/archives', changefreq: 'weekly', priority: 0.6 },
+          { url: '/projects', changefreq: 'weekly', priority: 0.7 },
+          { url: '/events', changefreq: 'daily', priority: 0.8 },
+          { url: '/events/latest', changefreq: 'daily', priority: 0.7 },
+          { url: '/events/featured', changefreq: 'weekly', priority: 0.7 },
+          { url: '/events/popular', changefreq: 'weekly', priority: 0.7 },
+          { url: '/categories', changefreq: 'weekly', priority: 0.6 },
+          { url: '/latest', changefreq: 'daily', priority: 0.8 },
+        ],
+        exclude: [
+          '/admin/**',
+          '/login',
+          '/register',
+          '/profile',
+          '/settings',
+          '/unauthorized',
+          '/test-*',
+          '/**/*-debug*',
+          '/**/*.jpg',
+          '/**/*.png',
+          '/**/*.gif',
+        ]
       }),
       // Compression Plugin
       viteCompression({
