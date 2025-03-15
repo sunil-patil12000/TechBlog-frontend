@@ -1,131 +1,235 @@
+#!/usr/bin/env node
+
+/**
+ * Sitemap Generator Script
+ * 
+ * This script generates a sitemap.xml file for the blog, including all static pages
+ * and dynamically generated content pages (blog posts, author pages, category pages).
+ * 
+ * Usage:
+ *   npm run generate-sitemap
+ * 
+ * Configuration:
+ *   - Set the BASE_URL to your production domain
+ *   - Modify the STATIC_ROUTES array to include all static routes in your application
+ *   - Update the API_ENDPOINTS to fetch dynamic content from your backend
+ */
+
 import fs from 'fs';
 import path from 'path';
+import axios from 'axios';
 import { format } from 'date-fns';
 
-// Domain configuration
-const SITE_URL = process.env.VITE_APP_URL || 'https://yourdomain.com';
+// Configuration
+const BASE_URL = 'https://yourdomain.com';
+const OUTPUT_PATH = './dist/sitemap.xml';
+const API_BASE_URL = process.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Define routes to include in sitemap
-// Static routes that don't have dynamic parameters
-const staticRoutes = [
-  // Public pages
-  { path: '/', changefreq: 'daily', priority: 1.0 },
-  { path: '/blog', changefreq: 'daily', priority: 0.9 },
-  { path: '/tech-news', changefreq: 'daily', priority: 0.9 },
-  { path: '/tech-news/latest', changefreq: 'daily', priority: 0.8 },
-  { path: '/tech-news/featured', changefreq: 'weekly', priority: 0.8 },
-  { path: '/tech-news/popular', changefreq: 'weekly', priority: 0.8 },
-  { path: '/about', changefreq: 'monthly', priority: 0.7 },
-  { path: '/about-us', changefreq: 'monthly', priority: 0.7 },
-  { path: '/contact', changefreq: 'monthly', priority: 0.7 },
-  { path: '/privacy', changefreq: 'monthly', priority: 0.5 },
-  { path: '/archives', changefreq: 'weekly', priority: 0.6 },
-  { path: '/projects', changefreq: 'weekly', priority: 0.7 },
-  { path: '/events', changefreq: 'daily', priority: 0.8 },
-  { path: '/events/latest', changefreq: 'daily', priority: 0.7 },
-  { path: '/events/featured', changefreq: 'weekly', priority: 0.7 },
-  { path: '/events/popular', changefreq: 'weekly', priority: 0.7 },
-  { path: '/categories', changefreq: 'weekly', priority: 0.6 },
-  { path: '/latest', changefreq: 'daily', priority: 0.8 },
-  
-  // You can add more static routes as needed
+// Static routes that should always be included
+const STATIC_ROUTES = [
+  '/',
+  '/blog',
+  '/about',
+  '/contact',
+  '/categories',
+  '/authors',
+  '/search',
+  '/privacy-policy',
+  '/terms-of-service',
 ];
 
-// Routes to exclude from sitemap (admin, auth, etc.)
-const excludePatterns = [
-  '/admin',
-  '/login',
-  '/register',
-  '/profile',
-  '/settings',
-  '/unauthorized',
-  '/test-',
-  '*-debug'
-];
+// API endpoints to fetch dynamic content
+const API_ENDPOINTS = {
+  posts: `${API_BASE_URL}/posts`,
+  categories: `${API_BASE_URL}/categories`,
+  authors: `${API_BASE_URL}/authors`,
+};
 
-// Generate XML for the sitemap
-function generateSitemapXml() {
-  const today = format(new Date(), 'yyyy-MM-dd');
-  
-  let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
-  xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
-  
-  // Add all static routes to sitemap
-  staticRoutes.forEach(route => {
-    // Skip excluded routes
-    if (excludePatterns.some(pattern => {
-      if (pattern.endsWith('*')) {
-        return route.path.startsWith(pattern.slice(0, -1));
-      } else if (pattern.startsWith('*')) {
-        return route.path.endsWith(pattern.slice(1));
-      } else {
-        return route.path.includes(pattern);
-      }
-    })) {
-      return;
-    }
-    
-    xml += '  <url>\n';
-    xml += `    <loc>${SITE_URL}${route.path}</loc>\n`;
-    xml += `    <lastmod>${today}</lastmod>\n`;
-    xml += `    <changefreq>${route.changefreq}</changefreq>\n`;
-    xml += `    <priority>${route.priority}</priority>\n`;
-    xml += '  </url>\n';
-  });
-  
-  xml += '</urlset>';
-  return xml;
+// Sitemap change frequency and priority settings
+const CHANGE_FREQ = {
+  home: 'daily',
+  blog: 'weekly',
+  post: 'monthly',
+  category: 'weekly',
+  author: 'monthly',
+  static: 'monthly',
+};
+
+const PRIORITY = {
+  home: '1.0',
+  blog: '0.9',
+  post: '0.8',
+  category: '0.7',
+  author: '0.6',
+  static: '0.5',
+};
+
+// Types
+interface Post {
+  slug: string;
+  updatedAt: string;
 }
 
-// Generate robots.txt content
-function generateRobotsTxt() {
-  return `# Allow all crawlers
-User-agent: *
-Allow: /
-
-# Disallow admin and auth pages
-Disallow: /admin/
-Disallow: /login
-Disallow: /register
-Disallow: /profile
-Disallow: /settings
-Disallow: /unauthorized
-
-# Sitemap location
-Sitemap: ${SITE_URL}/sitemap.xml`;
+interface Category {
+  slug: string;
 }
 
-// Main function to write files
-function generateFiles() {
+interface Author {
+  slug: string;
+}
+
+interface SitemapEntry {
+  url: string;
+  lastmod?: string;
+  changefreq: string;
+  priority: string;
+}
+
+/**
+ * Fetches data from the API
+ */
+async function fetchData<T>(endpoint: string): Promise<T[]> {
   try {
-    // Make sure public directory exists
-    const publicDir = path.resolve(__dirname, '../public');
-    if (!fs.existsSync(publicDir)) {
-      fs.mkdirSync(publicDir, { recursive: true });
+    const response = await axios.get(endpoint);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching data from ${endpoint}:`, error);
+    return [];
+  }
+}
+
+/**
+ * Generates sitemap entries for static routes
+ */
+function generateStaticEntries(): SitemapEntry[] {
+  return STATIC_ROUTES.map(route => {
+    const isHome = route === '/';
+    const isBlog = route === '/blog';
+    
+    return {
+      url: `${BASE_URL}${route}`,
+      lastmod: format(new Date(), 'yyyy-MM-dd'),
+      changefreq: isHome ? CHANGE_FREQ.home : isBlog ? CHANGE_FREQ.blog : CHANGE_FREQ.static,
+      priority: isHome ? PRIORITY.home : isBlog ? PRIORITY.blog : PRIORITY.static,
+    };
+  });
+}
+
+/**
+ * Generates sitemap entries for blog posts
+ */
+function generatePostEntries(posts: Post[]): SitemapEntry[] {
+  return posts.map(post => ({
+    url: `${BASE_URL}/blog/${post.slug}`,
+    lastmod: format(new Date(post.updatedAt), 'yyyy-MM-dd'),
+    changefreq: CHANGE_FREQ.post,
+    priority: PRIORITY.post,
+  }));
+}
+
+/**
+ * Generates sitemap entries for categories
+ */
+function generateCategoryEntries(categories: Category[]): SitemapEntry[] {
+  return categories.map(category => ({
+    url: `${BASE_URL}/category/${category.slug}`,
+    lastmod: format(new Date(), 'yyyy-MM-dd'),
+    changefreq: CHANGE_FREQ.category,
+    priority: PRIORITY.category,
+  }));
+}
+
+/**
+ * Generates sitemap entries for authors
+ */
+function generateAuthorEntries(authors: Author[]): SitemapEntry[] {
+  return authors.map(author => ({
+    url: `${BASE_URL}/author/${author.slug}`,
+    lastmod: format(new Date(), 'yyyy-MM-dd'),
+    changefreq: CHANGE_FREQ.author,
+    priority: PRIORITY.author,
+  }));
+}
+
+/**
+ * Generates the XML content for the sitemap
+ */
+function generateSitemapXml(entries: SitemapEntry[]): string {
+  const xmlHeader = '<?xml version="1.0" encoding="UTF-8"?>\n';
+  const urlsetOpen = '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+  const urlsetClose = '</urlset>';
+  
+  const urlEntries = entries.map(entry => {
+    let urlXml = `  <url>\n    <loc>${entry.url}</loc>\n`;
+    
+    if (entry.lastmod) {
+      urlXml += `    <lastmod>${entry.lastmod}</lastmod>\n`;
     }
     
-    // Generate and write sitemap.xml
-    const sitemapContent = generateSitemapXml();
-    fs.writeFileSync(
-      path.resolve(publicDir, 'sitemap.xml'),
-      sitemapContent,
-      'utf8'
-    );
-    console.log('✅ sitemap.xml generated successfully!');
+    urlXml += `    <changefreq>${entry.changefreq}</changefreq>\n`;
+    urlXml += `    <priority>${entry.priority}</priority>\n`;
+    urlXml += '  </url>';
     
-    // Generate and write robots.txt
-    const robotsContent = generateRobotsTxt();
-    fs.writeFileSync(
-      path.resolve(publicDir, 'robots.txt'),
-      robotsContent,
-      'utf8'
-    );
-    console.log('✅ robots.txt generated successfully!');
+    return urlXml;
+  }).join('\n');
+  
+  return xmlHeader + urlsetOpen + urlEntries + '\n' + urlsetClose;
+}
+
+/**
+ * Creates the output directory if it doesn't exist
+ */
+function ensureOutputDirectory(): void {
+  const outputDir = path.dirname(OUTPUT_PATH);
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
+  }
+}
+
+/**
+ * Main function to generate the sitemap
+ */
+async function generateSitemap(): Promise<void> {
+  console.log('Generating sitemap...');
+  
+  try {
+    // Fetch dynamic content
+    const [posts, categories, authors] = await Promise.all([
+      fetchData<Post>(API_ENDPOINTS.posts),
+      fetchData<Category>(API_ENDPOINTS.categories),
+      fetchData<Author>(API_ENDPOINTS.authors),
+    ]);
+    
+    console.log(`Fetched ${posts.length} posts, ${categories.length} categories, and ${authors.length} authors.`);
+    
+    // Generate entries
+    const staticEntries = generateStaticEntries();
+    const postEntries = generatePostEntries(posts);
+    const categoryEntries = generateCategoryEntries(categories);
+    const authorEntries = generateAuthorEntries(authors);
+    
+    // Combine all entries
+    const allEntries = [
+      ...staticEntries,
+      ...postEntries,
+      ...categoryEntries,
+      ...authorEntries,
+    ];
+    
+    // Generate XML
+    const sitemapXml = generateSitemapXml(allEntries);
+    
+    // Write to file
+    ensureOutputDirectory();
+    fs.writeFileSync(OUTPUT_PATH, sitemapXml);
+    
+    console.log(`Sitemap generated successfully at ${OUTPUT_PATH}`);
+    console.log(`Total URLs in sitemap: ${allEntries.length}`);
   } catch (error) {
-    console.error('Error generating sitemap or robots.txt:', error);
+    console.error('Error generating sitemap:', error);
     process.exit(1);
   }
 }
 
-// Execute the script
-generateFiles(); 
+// Execute the main function
+generateSitemap(); 

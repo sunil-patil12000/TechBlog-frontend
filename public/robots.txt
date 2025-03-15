@@ -1,20 +1,52 @@
-# Allow all web crawlers to access the site
+# robots.txt for Modern Tech Blog
+# https://yourdomain.com
+
+# Allow all web crawlers to access all content
 User-agent: *
 Allow: /
 
-# Disallow admin and private routes
+# Disallow admin and authentication pages
 Disallow: /admin/
 Disallow: /login
 Disallow: /register
 Disallow: /profile
 Disallow: /settings
-Disallow: /unauthorized
-Disallow: /test-*
+Disallow: /dashboard
+Disallow: /api/
+Disallow: /auth/
+
+# Disallow draft and preview pages
+Disallow: /preview/
+Disallow: /drafts/
+Disallow: /unpublished/
+
+# Disallow search results pages
+Disallow: /search?
+Disallow: /search/
+
+# Disallow specific file types
+Disallow: /*.json$
+Disallow: /*.xml$
+Disallow: /*.txt$
+Disallow: /*.md$
+
+# Allow CSS, JavaScript, and image files
+Allow: /*.js$
+Allow: /*.css$
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.png$
+Allow: /*.gif$
+Allow: /*.svg$
+Allow: /*.webp$
+Allow: /*.avif$
 
 # Sitemap location
 Sitemap: https://yourdomain.com/sitemap.xml
 
-# Crawl delay to prevent server overload
-Crawl-delay: 5
+# Crawl delay for specific bots (optional)
+# User-agent: Googlebot
+# Crawl-delay: 1
 
-# Note: Replace "https://yourdomain.com" with your actual domain once deployed 
+# User-agent: Bingbot
+# Crawl-delay: 1 

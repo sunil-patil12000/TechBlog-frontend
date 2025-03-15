@@ -20,6 +20,7 @@
     "seo:validate-schema:url": "node scripts/validate-schema.js --url=https://yourdomain.com",
     "seo:validate-schema:fix": "node scripts/validate-schema.js --dir=./public --fix",
     "seo:validate-schema:google": "node scripts/validate-schema.js --dir=./public --google-test",
+    "seo:validate-schema:simple": "node scripts/validate-schema-simple.js",
     "seo:check-lighthouse": "npx lighthouse-ci https://yourdomain.com --output-path=./lighthouse-report.html --view",
     "seo:check-links": "npx broken-link-checker https://yourdomain.com -ro",
     "build:ssg:with-sitemap": "SSG=true tsc && ts-node scripts/generate-sitemap.ts && vite-ssg build && node scripts/update-sitemap.js",
@@ -30,7 +31,8 @@
     "check:seo": "npx lighthouse http://localhost:3000 --only-categories=seo --view",
     "audit": "npm run analyze:vitals && npm run seo:validate-schema",
     "seo:audit-full": "npm run seo:validate-schema && npm run seo:check-lighthouse && npm run seo:check-links && npm run check:cwv",
-    "schema:test": "node scripts/validate-schema.js --file=./public/example-schemas/article.json --verbose"
+    "schema:test": "node scripts/validate-schema.js --file=./public/example-schemas/article.json --verbose",
+    "schema:test:simple": "node scripts/validate-schema-simple.js ./public/example-schemas/article.json"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
